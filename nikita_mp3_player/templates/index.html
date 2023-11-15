@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px; /* Add padding to give some space around the content */
+        }
+
+        .audio-player {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .controls button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        .controls button:hover {
+            background-color: #45a049;
+        }
+
+        .playlist {
+            list-style-type: none;
+            padding: 0;
+            text-align: left;
+            margin: 0;
+            max-height: 800px; /* Adjust the max-height as needed */
+            overflow-y: auto;
+        }
+
+        .playlist-item {
+            cursor: pointer;
+            padding: 8px;
+            border: 1px solid #ddd;
+            margin: 2px;
+        }
+
+        .playlist-item:hover {
+            background-color: #f1f1f1;
+        }
+
+        .playing {
+            background-color: #4caf50;
+            color: white;
+        }
+    </style>
+    <title>Audio Player</title>
+</head>
+<body>
+    <div class="audio-player">
+        <audio id="audio" controls>
+            <!-- Songs will be dynamically added using JavaScript -->
+        </audio>
+    </div>
+    <div class="controls">
+        <button id="prev">Previous</button>
+        <button id="playpause">Play/Pause</button>
+        <button id="shuffle">Shuffle</button>
+        <button id="next">Next</button>
+    </div>
+    <ul class="playlist" id="playlist">
+        <!-- Playlist will be dynamically added using JavaScript -->
+    </ul>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const audio = document.getElementById("audio");
+            const playpauseBtn = document.getElementById("playpause");
+            const nextBtn = document.getElementById("next");
+            const prevBtn = document.getElementById("prev");
+            const shuffleBtn = document.getElementById("shuffle");
+            const playlistContainer = document.getElementById("playlist");
+
+            let playlist = generatePlaylist("songs", 48);
+            let currentSongIndex = 0;
+            let isShuffled = false;
+
+            function generatePlaylist(folder, numberOfSongs) {
+                let songs = [];
+                for (let i = 1; i <= numberOfSongs; i++) {
+                    songs.push(`static/song${i}.mp3`);
+                }
+                return songs;
+            }
+
+            function playPause() {
+                if (audio.paused) {
+                    audio.play();
+                    playpauseBtn.innerHTML = "Pause";
+                } else {
+                    audio.pause();
+                    playpauseBtn.innerHTML = "Play";
+                }
+            }
+
+            function nextSong() {
+                if (isShuffled) {
+                    currentSongIndex = getRandomIndex();
+                } else {
+                    currentSongIndex = (currentSongIndex + 1) % playlist.length;
+                }
+                loadSong();
+            }
+
+            function prevSong() {
+                if (isShuffled) {
+                    currentSongIndex = getRandomIndex();
+                } else {
+                    currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
+                }
+                loadSong();
+            }
+
+            function shuffleSongs() {
+                isShuffled = !isShuffled;
+                shuffleBtn.innerHTML = isShuffled ? "Shuffle On" : "Shuffle Off";
+                if (isShuffled) {
+                    currentSongIndex = getRandomIndex();
+                    loadSong();
+                }
+            }
+
+            function getRandomIndex() {
+                return Math.floor(Math.random() * playlist.length);
+            }
+
+            function loadSong() {
+                audio.src = playlist[currentSongIndex];
+                audio.play();
+                playpauseBtn.innerHTML = "Pause";
+
+                // Remove the 'playing' class from all playlist items
+                document.querySelectorAll('.playlist-item').forEach(item => {
+                    item.classList.remove('playing');
+                });
+
+                // Add the 'playing' class to the currently playing item
+                document.getElementById(`song${currentSongIndex + 1}`).classList.add('playing');
+            }
+
+            function createPlaylistUI() {
+                const playlistFragment = document.createDocumentFragment();
+                playlist.forEach((song, index) => {
+                    const listItem = document.createElement("li");
+                    listItem.id = `song${index + 1}`;
+                    listItem.className = "playlist-item";
+                    listItem.textContent = `Song ${index + 1}`;
+                    listItem.addEventListener("click", () => {
+                        currentSongIndex = index;
+                        loadSong();
+                    });
+                    playlistFragment.appendChild(listItem);
+                });
+                playlistContainer.appendChild(playlistFragment);
+            }
+
+            function onSongEnd() {
+                // Automatically play the next song when the current one ends
+                nextSong();
+            }
+
+            createPlaylistUI();
+            playpauseBtn.addEventListener("click", playPause);
+            nextBtn.addEventListener("click", nextSong);
+            prevBtn.addEventListener("click", prevSong);
+            shuffleBtn.addEventListener("click", shuffleSongs);
+
+            audio.addEventListener("ended", onSongEnd);
+
+            // Initial load
+            loadSong();
+        });
+    </script>
+</body>
+</html>
+
